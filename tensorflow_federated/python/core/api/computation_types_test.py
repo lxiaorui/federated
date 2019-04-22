@@ -25,6 +25,7 @@ from six.moves import range
 import tensorflow as tf
 
 from tensorflow_federated.python.common_libs import anonymous_tuple
+from tensorflow_federated.python.common_libs import test
 from tensorflow_federated.python.core.api import computation_types
 from tensorflow_federated.python.core.api import placements
 
@@ -262,65 +263,244 @@ class TypesTest(absltest.TestCase):
     self.assertIsInstance(b, computation_types.TensorType)
 
   def test_tensor_type_equality(self):
-    t1 = computation_types.TensorType(tf.int32, [10])
-    t2 = computation_types.TensorType(tf.int32, [10])
-    t3 = computation_types.TensorType(tf.int32, [None])
-    t4 = computation_types.TensorType(tf.int32, [None])
-    self.assertEqual(t1, t2)
-    self.assertEqual(t3, t4)
-    self.assertNotEqual(t1, t3)
+    foo = computation_types.TensorType(tf.int32, [10])
+    foo_eq = computation_types.TensorType(tf.int32, [10])
+    foo_ne_attr1 = computation_types.TensorType(tf.int64, [10])
+    foo_ne_attr2 = computation_types.TensorType(tf.int32, [None])
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue(foo == foo)
+    self.assertFalse(foo == 1)
+    self.assertTrue(foo == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo == test.EQUALS_NOTHING)
+    self.assertTrue(foo == foo_eq)
+    self.assertTrue(foo_eq == foo)
+    self.assertFalse(foo == foo_ne_attr1)
+    self.assertFalse(foo_ne_attr1 == foo)
+    self.assertFalse(foo == foo_ne_attr2)
+    self.assertFalse(foo_ne_attr2 == foo)
+    # NotEqual
+    self.assertFalse(foo != foo)
+    self.assertTrue(foo != 1)
+    self.assertFalse(foo != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo != test.EQUALS_NOTHING)
+    self.assertFalse(foo != foo_eq)
+    self.assertFalse(foo_eq != foo)
+    self.assertTrue(foo != foo_ne_attr1)
+    self.assertTrue(foo_ne_attr1 != foo)
+    self.assertTrue(foo != foo_ne_attr2)
+    self.assertTrue(foo_ne_attr2 != foo)
+    # pylint: enable=g-generic-assert
 
   def test_tuple_type_equality(self):
-    t1 = computation_types.to_type([tf.int32, tf.bool])
-    t2 = computation_types.to_type([tf.int32, tf.bool])
-    t3 = computation_types.to_type([('a', tf.int32), ('b', tf.bool)])
-    t4 = computation_types.to_type([('a', tf.int32), ('b', tf.bool)])
-    t5 = computation_types.to_type([('b', tf.int32), ('a', tf.bool)])
-    t6 = computation_types.to_type([('a', tf.bool), ('b', tf.int32)])
-    self.assertEqual(t1, t2)
-    self.assertEqual(t3, t4)
-    self.assertNotEqual(t1, t3)
-    self.assertNotEqual(t4, t5)
-    self.assertNotEqual(t4, t6)
+    foo1 = computation_types.NamedTupleType([tf.int32, tf.bool])
+    foo1_eq = computation_types.NamedTupleType([tf.int32, tf.bool])
+    foo1_ne_order = computation_types.NamedTupleType([tf.bool, tf.int32])
+    foo1_ne_value = computation_types.NamedTupleType([tf.float32, tf.float32])
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue(foo1 == foo1)
+    self.assertFalse(foo1 == 1)
+    self.assertTrue(foo1 == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo1 == test.EQUALS_NOTHING)
+    self.assertTrue(foo1 == foo1_eq)
+    self.assertTrue(foo1_eq == foo1)
+    self.assertFalse(foo1 == foo1_ne_order)
+    self.assertFalse(foo1_ne_order == foo1)
+    self.assertFalse(foo1 == foo1_ne_value)
+    self.assertFalse(foo1_ne_value == foo1)
+    # NotEqual
+    self.assertFalse(foo1 != foo1)
+    self.assertTrue(foo1 != 1)
+    self.assertFalse(foo1 != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo1 != test.EQUALS_NOTHING)
+    self.assertFalse(foo1 != foo1_eq)
+    self.assertFalse(foo1_eq != foo1)
+    self.assertTrue(foo1 != foo1_ne_order)
+    self.assertTrue(foo1_ne_order != foo1)
+    self.assertTrue(foo1 != foo1_ne_value)
+    self.assertTrue(foo1_ne_value != foo1)
+    # pylint: enable=g-generic-assert
+    foo2 = computation_types.NamedTupleType([('a', tf.int32), ('b', tf.bool)])
+    foo2_eq = computation_types.NamedTupleType([('a', tf.int32),
+                                                ('b', tf.bool)])
+    foo2_ne_order = computation_types.NamedTupleType([('b', tf.bool),
+                                                      ('a', tf.int32)])
+    foo2_ne_name = computation_types.NamedTupleType([('b', tf.int32),
+                                                     ('a', tf.bool)])
+    foo2_ne_value = computation_types.NamedTupleType([('a', tf.float32),
+                                                      ('b', tf.float32)])
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue(foo2 == foo2)
+    self.assertFalse(foo2 == 1)
+    self.assertTrue(foo2 == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo2 == test.EQUALS_NOTHING)
+    self.assertTrue(foo2 == foo2_eq)
+    self.assertTrue(foo2_eq == foo2)
+    self.assertFalse(foo2 == foo2_ne_order)
+    self.assertFalse(foo2_ne_order == foo2)
+    self.assertFalse(foo2 == foo2_ne_name)
+    self.assertFalse(foo2_ne_name == foo2)
+    self.assertFalse(foo2 == foo2_ne_value)
+    self.assertFalse(foo2_ne_value == foo2)
+    self.assertFalse(foo2 == foo1)
+    self.assertFalse(foo1 == foo2)
+    # NotEqual
+    self.assertFalse(foo2 != foo2)
+    self.assertTrue(foo2 != 1)
+    self.assertFalse(foo2 != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo2 != test.EQUALS_NOTHING)
+    self.assertFalse(foo2 != foo2_eq)
+    self.assertFalse(foo2_eq != foo2)
+    self.assertTrue(foo2 != foo2_ne_order)
+    self.assertTrue(foo2_ne_order != foo2)
+    self.assertTrue(foo2 != foo2_ne_name)
+    self.assertTrue(foo2_ne_name != foo2)
+    self.assertTrue(foo2 != foo2_ne_value)
+    self.assertTrue(foo2_ne_value != foo2)
+    self.assertTrue(foo2 != foo1)
+    self.assertTrue(foo1 != foo2)
+    # pylint: enable=g-generic-assert
 
   def test_sequence_type_equality(self):
-    t1 = computation_types.SequenceType(tf.int32)
-    t2 = computation_types.SequenceType(tf.int32)
-    t3 = computation_types.SequenceType(tf.bool)
-    self.assertEqual(t1, t2)
-    self.assertNotEqual(t1, t3)
+    foo = computation_types.SequenceType(tf.int32)
+    foo_eq = computation_types.SequenceType(tf.int32)
+    foo_ne = computation_types.SequenceType(tf.bool)
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue(foo == foo)
+    self.assertFalse(foo == 1)
+    self.assertTrue(foo == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo == test.EQUALS_NOTHING)
+    self.assertTrue(foo == foo_eq)
+    self.assertTrue(foo_eq == foo)
+    self.assertFalse(foo == foo_ne)
+    self.assertFalse(foo_ne == foo)
+    # NotEqual
+    self.assertFalse(foo != foo)
+    self.assertTrue(foo != 1)
+    self.assertFalse(foo != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo != test.EQUALS_NOTHING)
+    self.assertFalse(foo != foo_eq)
+    self.assertFalse(foo_eq != foo)
+    self.assertTrue(foo != foo_ne)
+    self.assertTrue(foo_ne != foo)
+    # pylint: enable=g-generic-assert
 
   def test_function_type_equality(self):
-    t1 = computation_types.FunctionType(tf.int32, tf.bool)
-    t2 = computation_types.FunctionType(tf.int32, tf.bool)
-    t3 = computation_types.FunctionType(tf.int32, tf.int32)
-    t4 = computation_types.FunctionType(tf.bool, tf.bool)
-    self.assertEqual(t1, t2)
-    self.assertNotEqual(t1, t3)
-    self.assertNotEqual(t1, t4)
+    foo = computation_types.FunctionType(tf.int32, tf.bool)
+    foo_eq = computation_types.FunctionType(tf.int32, tf.bool)
+    foo_ne_attr1 = computation_types.FunctionType(tf.bool, tf.bool)
+    foo_ne_attr2 = computation_types.FunctionType(tf.int32, tf.int32)
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue(foo == foo)
+    self.assertFalse(foo == 1)
+    self.assertTrue(foo == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo == test.EQUALS_NOTHING)
+    self.assertTrue(foo == foo_eq)
+    self.assertTrue(foo_eq == foo)
+    self.assertFalse(foo == foo_ne_attr1)
+    self.assertFalse(foo_ne_attr1 == foo)
+    self.assertFalse(foo == foo_ne_attr2)
+    self.assertFalse(foo_ne_attr2 == foo)
+    # NotEqual
+    self.assertFalse(foo != foo)
+    self.assertTrue(foo != 1)
+    self.assertFalse(foo != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo != test.EQUALS_NOTHING)
+    self.assertFalse(foo != foo_eq)
+    self.assertFalse(foo_eq != foo)
+    self.assertTrue(foo != foo_ne_attr1)
+    self.assertTrue(foo_ne_attr1 != foo)
+    self.assertTrue(foo != foo_ne_attr2)
+    self.assertTrue(foo_ne_attr2 != foo)
+    # pylint: enable=g-generic-assert
 
   def test_abstract_type_equality(self):
-    t1 = computation_types.AbstractType('T')
-    t2 = computation_types.AbstractType('T')
-    t3 = computation_types.AbstractType('U')
-    self.assertEqual(t1, t2)
-    self.assertNotEqual(t1, t3)
+    foo = computation_types.AbstractType('T')
+    foo_eq = computation_types.AbstractType('T')
+    foo_ne = computation_types.AbstractType('U')
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue(foo == foo)
+    self.assertFalse(foo == 1)
+    self.assertTrue(foo == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo == test.EQUALS_NOTHING)
+    self.assertTrue(foo == foo_eq)
+    self.assertTrue(foo_eq == foo)
+    self.assertFalse(foo == foo_ne)
+    self.assertFalse(foo_ne == foo)
+    # NotEqual
+    self.assertFalse(foo != foo)
+    self.assertTrue(foo != 1)
+    self.assertFalse(foo != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo != test.EQUALS_NOTHING)
+    self.assertFalse(foo != foo_eq)
+    self.assertFalse(foo_eq != foo)
+    self.assertTrue(foo != foo_ne)
+    self.assertTrue(foo_ne != foo)
+    # pylint: enable=g-generic-assert
 
   def test_placement_type_equality(self):
-    t1 = computation_types.PlacementType()
-    t2 = computation_types.PlacementType()
-    self.assertEqual(t1, t2)
+    foo = computation_types.PlacementType()
+    foo_eq = computation_types.PlacementType()
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue(foo == foo)
+    self.assertFalse(foo == 1)
+    self.assertTrue(foo == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo == test.EQUALS_NOTHING)
+    self.assertTrue(foo == foo_eq)
+    self.assertTrue(foo_eq == foo)
+    # NotEqual
+    self.assertFalse(foo != foo)
+    self.assertTrue(foo != 1)
+    self.assertFalse(foo != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo != test.EQUALS_NOTHING)
+    self.assertFalse(foo != foo_eq)
+    self.assertFalse(foo_eq != foo)
+    # pylint: enable=g-generic-assert
 
   def test_federated_type_equality(self):
-    t1 = computation_types.FederatedType(tf.int32, placements.CLIENTS, False)
-    t2 = computation_types.FederatedType(tf.int32, placements.CLIENTS, False)
-    t3 = computation_types.FederatedType(tf.bool, placements.CLIENTS, False)
-    t4 = computation_types.FederatedType(tf.int32, placements.SERVER, False)
-    t5 = computation_types.FederatedType(tf.int32, placements.CLIENTS, True)
-    self.assertEqual(t1, t2)
-    self.assertNotEqual(t1, t3)
-    self.assertNotEqual(t1, t4)
-    self.assertNotEqual(t1, t5)
+    foo = computation_types.FederatedType(tf.int32, placements.CLIENTS, False)
+    foo_eq = computation_types.FederatedType(tf.int32, placements.CLIENTS,
+                                             False)
+    foo_ne_attr1 = computation_types.FederatedType(tf.bool, placements.CLIENTS,
+                                                   False)
+    foo_ne_attr2 = computation_types.FederatedType(tf.int32, placements.SERVER,
+                                                   False)
+    foo_ne_attr3 = computation_types.FederatedType(tf.int32, placements.CLIENTS,
+                                                   True)
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue(foo == foo)
+    self.assertFalse(foo == 1)
+    self.assertTrue(foo == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo == test.EQUALS_NOTHING)
+    self.assertTrue(foo == foo_eq)
+    self.assertTrue(foo_eq == foo)
+    self.assertFalse(foo == foo_ne_attr1)
+    self.assertFalse(foo_ne_attr1 == foo)
+    self.assertFalse(foo == foo_ne_attr2)
+    self.assertFalse(foo_ne_attr2 == foo)
+    self.assertFalse(foo == foo_ne_attr3)
+    self.assertFalse(foo_ne_attr3 == foo)
+    # NotEqual
+    self.assertFalse(foo != foo)
+    self.assertTrue(foo != 1)
+    self.assertFalse(foo != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo != test.EQUALS_NOTHING)
+    self.assertFalse(foo != foo_eq)
+    self.assertFalse(foo_eq != foo)
+    self.assertTrue(foo != foo_ne_attr1)
+    self.assertTrue(foo_ne_attr1 != foo)
+    self.assertTrue(foo != foo_ne_attr2)
+    self.assertTrue(foo_ne_attr2 != foo)
+    self.assertTrue(foo != foo_ne_attr3)
+    self.assertTrue(foo_ne_attr3 != foo)
+    # pylint: enable=g-generic-assert
 
   def test_named_tuple_type_with_none_keys(self):
     self.assertEqual(

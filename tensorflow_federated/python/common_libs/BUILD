@@ -23,6 +23,7 @@ py_test(
     srcs = ["anonymous_tuple_test.py"],
     deps = [
         ":anonymous_tuple",
+        ":test",
         "@absl_py//absl/testing:absltest",
         "@six_archive//:six",
     ],

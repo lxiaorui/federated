@@ -23,6 +23,28 @@ from six.moves import zip
 import tensorflow as tf
 
 
+class _EqualsEverything(object):
+
+  def __eq__(self, other):
+    return True
+
+  def __ne__(self, other):
+    return not self == other
+
+
+class _EqualsNothing(object):
+
+  def __eq__(self, other):
+    return False
+
+  def __ne__(self, other):
+    return not self == other
+
+
+EQUALS_EVERYTHING = _EqualsEverything()
+EQUALS_NOTHING = _EqualsNothing()
+
+
 class TestCase(tf.test.TestCase, absltest.TestCase):
   """Base class for TensroFlow Federated tests."""
 

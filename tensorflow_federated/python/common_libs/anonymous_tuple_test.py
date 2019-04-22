@@ -24,6 +24,7 @@ from absl.testing import absltest
 from six.moves import range
 
 from tensorflow_federated.python.common_libs import anonymous_tuple
+from tensorflow_federated.python.common_libs import test
 
 
 class AnonymousTupleTest(absltest.TestCase):
@@ -147,6 +148,73 @@ class AnonymousTupleTest(absltest.TestCase):
       t[1] = 5
     with self.assertRaises(TypeError):
       t[2] = [1, 2, 3]
+
+  def test_equality(self):
+    foo1 = anonymous_tuple.AnonymousTuple([(None, 1), (None, 2)])
+    foo1_eq_clone = anonymous_tuple.AnonymousTuple([(None, 1), (None, 2)])
+    foo1_eq_order = anonymous_tuple.AnonymousTuple([(None, 2), (None, 1)])
+    foo1_ne_value = anonymous_tuple.AnonymousTuple([(None, 10), (None, 10)])
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue((foo1 == foo1))
+    self.assertFalse(foo1 == 1)
+    self.assertTrue(foo1 == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo1 == test.EQUALS_NOTHING)
+    self.assertTrue(foo1 == foo1_eq_clone)
+    self.assertTrue(foo1_eq_clone == foo1)
+    self.assertFalse(foo1 == foo1_eq_order)
+    self.assertFalse(foo1_eq_order == foo1)
+    self.assertFalse(foo1 == foo1_ne_value)
+    self.assertFalse(foo1_ne_value == foo1)
+    # NotEqual
+    self.assertFalse(foo1 != foo1)
+    self.assertTrue(foo1 != 1)
+    self.assertFalse(foo1 != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo1 != test.EQUALS_NOTHING)
+    self.assertFalse(foo1 != foo1_eq_clone)
+    self.assertFalse(foo1_eq_clone != foo1)
+    self.assertTrue(foo1 != foo1_eq_order)
+    self.assertTrue(foo1_eq_order != foo1)
+    self.assertTrue(foo1 != foo1_ne_value)
+    self.assertTrue(foo1_ne_value != foo1)
+    # pylint: enable=g-generic-assert
+    foo2 = anonymous_tuple.AnonymousTuple([('a', 1), ('b', 2)])
+    foo2_eq_clone = anonymous_tuple.AnonymousTuple([('a', 1), ('b', 2)])
+    foo2_ne_order = anonymous_tuple.AnonymousTuple([('b', 2), ('a', 1)])
+    foo2_ne_name = anonymous_tuple.AnonymousTuple([('c', 1), ('d', 2)])
+    foo2_ne_value = anonymous_tuple.AnonymousTuple([('a', 10), ('b', 10)])
+    # pylint: disable=g-generic-assert
+    # Equal
+    self.assertTrue(foo2 == foo2)
+    self.assertFalse(foo2 == 1)
+    self.assertTrue(foo2 == test.EQUALS_EVERYTHING)
+    self.assertFalse(foo2 == test.EQUALS_NOTHING)
+    self.assertTrue(foo2 == foo2_eq_clone)
+    self.assertTrue(foo2_eq_clone == foo2)
+    self.assertFalse(foo2 == foo2_ne_order)
+    self.assertFalse(foo2_ne_order == foo2)
+    self.assertFalse(foo2 == foo2_ne_name)
+    self.assertFalse(foo2_ne_name == foo2)
+    self.assertFalse(foo2 == foo2_ne_value)
+    self.assertFalse(foo2_ne_value == foo2)
+    self.assertFalse(foo2 == foo1)
+    self.assertFalse(foo1 == foo2)
+    # NotEqual
+    self.assertFalse(foo2 != foo2)
+    self.assertTrue(foo2 != 1)
+    self.assertFalse(foo2 != test.EQUALS_EVERYTHING)
+    self.assertTrue(foo2 != test.EQUALS_NOTHING)
+    self.assertFalse(foo2 != foo2_eq_clone)
+    self.assertFalse(foo2_eq_clone != foo2)
+    self.assertTrue(foo2 != foo2_ne_order)
+    self.assertTrue(foo2_ne_order != foo2)
+    self.assertTrue(foo2 != foo2_ne_name)
+    self.assertTrue(foo2_ne_name != foo2)
+    self.assertTrue(foo2 != foo2_ne_value)
+    self.assertTrue(foo2_ne_value != foo2)
+    self.assertTrue(foo2 != foo1)
+    self.assertTrue(foo1 != foo2)
+    # pylint: enable=g-generic-assert
 
   def test_hash(self):
     v1 = [(str(i) if i > 30 else None, i) for i in range(0, 50, 10)]

@@ -463,6 +463,7 @@ py_test(
     srcs = ["placement_literals_test.py"],
     deps = [
         ":placement_literals",
+        "//tensorflow_federated/python/common_libs:test",
         "@absl_py//absl/testing:absltest",
     ],
 )

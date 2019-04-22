@@ -49,6 +49,7 @@ py_test(
         ":computation_types",
         ":placements",
         "//tensorflow_federated/python/common_libs:anonymous_tuple",
+        "//tensorflow_federated/python/common_libs:test",
         "@absl_py//absl/testing:absltest",
         "@org_tensorflow//tensorflow:tensorflow_py",
         "@six_archive//:six",
