@@ -244,15 +244,19 @@ def replace_chained_federated_maps_with_federated_map(comp):
            /    \
   Intrinsic      Tuple
                  |
-                 [Lambda(arg), Comp(z)]
-                             \
-                              Call
+                 [Block, Comp(z)]
+                 /     \
+         fn=Tuple       Lambda(arg)
+            |                \
+    [Comp(x), Comp(y)]        Call
                              /    \
-                      Comp(x)      Call
-                                  /    \
-                           Comp(y)      Ref(arg)
+                       Sel(0)      Call
+                      /           /    \
+               Ref(fn)      Sel(1)      Ref(arg)
+                           /
+                    Ref(fn)
 
-  federated_map(<(arg -> x(y(arg))), z>)
+  federated_map(<(let fn=<x, y> in (arg -> fn[0](fn[1](arg)))), z>)
 
   The functional computations `x` and `y`, and the argument `z` are retained;
   the other computations are replaced.
@@ -282,22 +286,52 @@ def replace_chained_federated_maps_with_federated_map(comp):
     """Returns a new transformed computation or `comp`."""
     if not _should_transform(comp):
       return comp
-    map_arg = comp.argument[1].argument[1]
-    inner_arg = computation_building_blocks.Reference(
-        'arg', map_arg.type_signature.member)
-    inner_fn = comp.argument[1].argument[0]
-    inner_call = computation_building_blocks.Call(inner_fn, inner_arg)
-    outer_fn = comp.argument[0]
-    outer_call = computation_building_blocks.Call(outer_fn, inner_call)
-    map_lambda = computation_building_blocks.Lambda(inner_arg.name,
-                                                    inner_arg.type_signature,
-                                                    outer_call)
-    map_tuple = computation_building_blocks.Tuple([map_lambda, map_arg])
-    map_intrinsic_type = computation_types.FunctionType(
-        map_tuple.type_signature, comp.function.type_signature.result)
-    map_intrinsic = computation_building_blocks.Intrinsic(
-        comp.function.uri, map_intrinsic_type)
-    return computation_building_blocks.Call(map_intrinsic, map_tuple)
+
+    def _create_block_to_chained_calls(comps):
+      r"""Constructs a block to a chain of called functional computations.
+
+                    Block
+                   /     \
+           fn=Tuple       Lambda(arg)
+              |                      \
+         [Comp, Comp]                 Call
+                                     /    \
+                               Sel(0)      Call
+                              /           /    \
+                       Ref(fn)      Sel(1)      Ref(arg)
+                                   /
+                            Ref(fn)
+
+      Args:
+        comps: A Python list of functional computations ordered from inner-most
+          to outer-most.
+
+      Returns:
+        A `computation_building_blocks.Block` representing the Python list of
+        functional computations `comps`.
+      """
+      functions = computation_building_blocks.Tuple(comps)
+      fn = computation_building_blocks.Reference('fn', functions.type_signature)
+      ref = computation_building_blocks.Reference(
+          'arg', comps[0].type_signature.parameter)
+      arg = ref
+      for index, _ in enumerate(comps):
+        sel = computation_building_blocks.Selection(fn, index=index)
+        call = computation_building_blocks.Call(sel, arg)
+        arg = call
+      lam = computation_building_blocks.Lambda(ref.name, ref.type_signature,
+                                               call)
+      return computation_building_blocks.Block([('fn', functions)], lam)
+
+    block = _create_block_to_chained_calls(
+        (comp.argument[1].argument[0], comp.argument[0]))
+    arg = computation_building_blocks.Tuple(
+        [block, comp.argument[1].argument[1]])
+    intrinsic_type = computation_types.FunctionType(
+        arg.type_signature, comp.function.type_signature.result)
+    intrinsic = computation_building_blocks.Intrinsic(comp.function.uri,
+                                                      intrinsic_type)
+    return computation_building_blocks.Call(intrinsic, arg)
 
   return transformation_utils.transform_postorder(comp, _transform)
 
